@@ -1,2 +1,3 @@
 .venv
 /TP-FINAL/datasets
+/TP-FINAL/models/*.pth
