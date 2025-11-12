@@ -1,3 +1,15 @@
+.ipynb_checkpoints
 .venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.DS_Store
 /TP-FINAL/datasets
 /TP-FINAL/models/*.pth
