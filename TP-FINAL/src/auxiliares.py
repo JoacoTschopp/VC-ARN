@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-
-from arqui_cnn import BaseModel, ImprovedCNN, ResNetCIFAR, SimpleCNN
+from .arqui_cnn import BaseModel, ImprovedCNN, ResNetCIFAR, SimpleCNN
 
 try:
     from torchview import draw_graph

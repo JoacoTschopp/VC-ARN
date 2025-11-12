@@ -7,7 +7,7 @@ import numpy as np
 import torchvision.datasets as datasets
 from torch.utils.data import DataLoader, Dataset
 
-from pre_processed import TransformConfig, build_transforms, compute_dataset_stats
+from .pre_processed import TransformConfig, build_transforms, compute_dataset_stats
 
 
 class Cifar101Dataset(Dataset):
@@ -41,17 +41,18 @@ def download_file(url, filename):
         print(f"✓ {filename} ya existe")
 
 
-def load_data() -> str:
+def load_data(datasets_folder: str | None = None) -> str:
     """
     Descarga los datos de CIFAR10.1 si no existen
     """
 
     # Carpeta local donde van a guardar los datos
-    datasets_folder = "../datasets/Grupo_3"
+    if datasets_folder is None:
+        datasets_folder = "../datasets"
     makedirs(datasets_folder, exist_ok=True)
 
     # Carpeta para datos nuevos (CIFAR10.1)
-    new_datasets_folder = "../datasets/Grupo_3"
+    new_datasets_folder = f"{datasets_folder}/Grupo_3"
     makedirs(new_datasets_folder, exist_ok=True)
 
     # Rutas de los archivos

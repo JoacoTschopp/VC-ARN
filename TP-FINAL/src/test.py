@@ -1,6 +1,6 @@
 import numpy as np
 
-from load import load_cifar101
+from .load import load_cifar101
 
 CLASS_NAMES = [
     "airplane",
