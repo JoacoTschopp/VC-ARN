@@ -10,13 +10,13 @@ from torchvision import datasets
 @dataclass
 class TransformConfig:
     img_size: int = 32
-    use_random_horizontal_flip: bool = True
-    use_random_resized_crop: bool = True
+    use_random_horizontal_flip: bool = False
+    use_random_resized_crop: bool = False
     use_color_jitter: bool = False
-    jitter_brightness: float = 0.2
-    jitter_contrast: float = 0.2
-    jitter_saturation: float = 0.2
-    jitter_hue: float = 0.1
+    jitter_brightness: float = 0.0
+    jitter_contrast: float = 0.0
+    jitter_saturation: float = 0.0
+    jitter_hue: float = 0.0
     normalize: bool = True
 
 

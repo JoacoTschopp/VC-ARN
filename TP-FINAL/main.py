@@ -5,7 +5,6 @@ import torch
 from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR
 from src.auxiliares import compare_models, draw_model, que_fierro_tengo
 from src.load import load_cifar10, load_data
-from src.pre_processed import TransformConfig
 from src.test import run_cifar101_evaluation
 from src.train_pipeline import TrainingPipeline
 
@@ -16,7 +15,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V2"
+    experiment_name = "Grupo_3_V4"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -51,27 +50,22 @@ def main():
     # ==============================================================================
 
     config = {
-        'lr': 0.1,
+        'lr': 0.001,
         'epochs': 200,
         'batch_size': 64,
-        'patience': 20,
-        'optimizer': 'SGD',
+        'patience': 10,
+        'optimizer': 'Adam',
         'momentum': 0.9,
         'weight_decay': 5e-4,
         'nesterov': True,
         'use_scheduler': True,
         'warmup_epochs': 5,
-        'label_smoothing': 0.1,
+        'label_smoothing': 0.05,
         'checkpoint_dir': str(checkpoints_dir),
         'experiment_dir': str(experiment_dir),
         'plots_dir': str(plots_dir),
         'artifacts_dir': str(artifacts_dir),
     }
-
-    # Actualizar variables globales para compatibilidad
-    LR = config['lr']
-    EPOCHS = config['epochs']
-    BATCH_SIZE = config['batch_size']
 
     print("="*70)
     print("CONFIGURACIÓN")
