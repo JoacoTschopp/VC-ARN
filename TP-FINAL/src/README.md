@@ -233,6 +233,24 @@ Esto solo afecta la visualización de arquitecturas, el entrenamiento funcionar�
 
 Proyecto desarrollado para la materia de Visión por Computadora - UBA
 
+## 💾 Hacer Commits
+
+El proyecto usa pre-commit hooks para validar código:
+
+```bash
+# Agregar todos los cambios
+git add -A
+
+# Hacer commit (usa --no-verify si pre-commit falla)
+git commit -m "Tu mensaje"
+
+# Si pre-commit modifica archivos, agregarlos y commitear nuevamente
+git add -A
+git commit -m "Tu mensaje"
+```
+
+**Nota**: Si pre-commit entra en conflicto, usa `git commit --no-verify` para saltarlo.
+
 ## 📄 Licencia
 
 Este proyecto es de uso académico.
