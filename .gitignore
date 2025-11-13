@@ -22,8 +22,8 @@ plots
 artifacts
 Notebook_materia
 
-.isort.cfg
-.ruff.toml
+*.cfg
+*.toml
 
 /Clases_Practicas/
 /Salidas_Experimentos/

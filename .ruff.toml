@@ -1,2 +1,0 @@
-# Configuración de Ruff
-extend-ignore = ["F403", "F405"]
