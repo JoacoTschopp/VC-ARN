@@ -1,4 +1,6 @@
 from pathlib import Path
+from datetime import datetime
+import time
 
 import torch
 
@@ -10,19 +12,41 @@ from src.test import run_cifar101_evaluation
 from src.train_pipeline import TrainingPipeline
 
 
+def format_elapsed_time(elapsed_seconds: float) -> str:
+    """Formatea tiempo transcurrido en formato legible."""
+    hours = int(elapsed_seconds // 3600)
+    minutes = int((elapsed_seconds % 3600) // 60)
+    seconds = int(elapsed_seconds % 60)
+    
+    if hours > 0:
+        return f"{hours}h {minutes}m {seconds}s"
+    elif minutes > 0:
+        return f"{minutes}m {seconds}s"
+    else:
+        return f"{seconds}s"
 
 
 
 
 
 def main():
-    print("Iniciando el proyecto")
+    # ============================================================================
+    # INICIO DEL EXPERIMENTO
+    # ============================================================================
+    start_time = time.time()
+    start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    print("\n" + "="*70)
+    print("EXPERIMENTO INICIADO")
+    print("="*70)
+    print(f"Fecha y hora: {start_datetime}")
+    print("="*70 + "\n")
 
     #Que fierro tengo??
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V4"
+    experiment_name = "Grupo_3_V7"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -40,7 +64,6 @@ def main():
     augmentation_configs = config_augmentation()
     datasets_folder = load_data(datasets_folder=str(datasets))
 
-
     # Comparar arquitecturas
     compare_models()
 
@@ -48,11 +71,17 @@ def main():
     draw_model(NASCNN15(), output_dir=artifacts_dir)
 
     # 2. Preprocesamiento de Datos
-
     # Cargamos los datos de entrenamiento, calculamos media y desvio para normalizar
-
     augmentation_configs = config_augmentation()
-    cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(datasets_folder, config=augmentation_configs.config_sin_augmentation)
+    cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(
+        datasets_folder, config=augmentation_configs.config_cnn_nas
+    )
+    
+    elapsed_prep = time.time() - start_time
+    print("\n" + "="*70)
+    print(f"✓ PREPROCESAMIENTO COMPLETADO")
+    print(f"  Tiempo transcurrido: {format_elapsed_time(elapsed_prep)}")
+    print("="*70 + "\n")
 
     # 3. Entrenamiento
     # ==============================================================================
@@ -62,9 +91,9 @@ def main():
     config = {
         'experiment_name': experiment_name,
         'lr': 0.1,
-        'epochs': 5,
+        'epochs': 300,
         'batch_size': 128,
-        'es_patience': 10,
+        'es_patience': 15,
         'lr_scheduler': True,
         'lr_patience': 3,
         'momentum': 0.9,
@@ -79,6 +108,8 @@ def main():
         'experiment_dir': str(experiment_dir),
         'plots_dir': str(plots_dir),
         'artifacts_dir': str(artifacts_dir),
+        'show_plots': False,          # o True para mostrarlos
+        'plot_display_time': 5,       # opcional si quieres autocierre en segundos
     }
 
     # Actualizar variables globales para compatibilidad
@@ -144,6 +175,12 @@ def main():
 
     pipeline.train(train_dataloader, validation_dataloader)
     
+    elapsed_train = time.time() - start_time
+    print("\n" + "="*70)
+    print(f"✓ ENTRENAMIENTO COMPLETADO")
+    print(f"  Tiempo transcurrido: {format_elapsed_time(elapsed_train)}")
+    print("="*70 + "\n")
+    
     # ==============================================================================
     # REANUDAR ENTRENAMIENTO (si fue interrumpido)
     # ==============================================================================
@@ -168,11 +205,34 @@ def main():
     # SUMARIZACIÓN DE EXPERIMENTOS
     # ==============================================================================
     summary = pipeline.summarize_experiments(sort_by="results.best_val_acc", top_k=5)
+    
+    elapsed_viz = time.time() - start_time
+    print("\n" + "="*70)
+    print(f"✓ VISUALIZACIONES COMPLETADAS")
+    print(f"  Tiempo transcurrido: {format_elapsed_time(elapsed_viz)}")
+    print("="*70 + "\n")
 
     # ==============================================================================
     # TEST
     # ==============================================================================
-    run_cifar101_evaluation(pipeline, datasets_folder)
+    run_cifar101_evaluation(pipeline, datasets_folder, config=augmentation_configs.config_cnn_nas)
+    
+    elapsed_total = time.time() - start_time
+    print("\n" + "="*70)
+    print(f"✓ TEST COMPLETADO")
+    print(f"  Tiempo transcurrido: {format_elapsed_time(elapsed_total)}")
+    print("="*70 + "\n")
+    
+    # ============================================================================
+    # RESUMEN FINAL
+    # ============================================================================
+    end_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print("="*70)
+    print("EXPERIMENTO FINALIZADO")
+    print("="*70)
+    print(f"Fecha y hora final: {end_datetime}")
+    print(f"Tiempo total: {format_elapsed_time(elapsed_total)}")
+    print("="*70 + "\n")
     
 if __name__ == "__main__":
     main()

@@ -83,8 +83,12 @@ def load_cifar10(
 
     config = config or TransformConfig()
 
-    mean, std = compute_dataset_stats(datasets_folder)
-    training_transformations, test_transformations = build_transforms(mean, std, config)
+    mean, std, zca_params = compute_dataset_stats(
+        datasets_folder, compute_zca=config.use_whitening
+    )
+    training_transformations, test_transformations = build_transforms(
+        mean, std, config, zca_params=zca_params
+    )
 
     train_dataset = datasets.CIFAR10(
         datasets_folder, train=True, download=True, transform=training_transformations
@@ -123,8 +127,10 @@ def load_cifar101(
     print("=" * 70)
 
     config = config or TransformConfig()
-    mean, std = compute_dataset_stats(datasets_folder)
-    _, test_transform = build_transforms(mean, std, config)
+    mean, std, zca_params = compute_dataset_stats(
+        datasets_folder, compute_zca=config.use_whitening
+    )
+    _, test_transform = build_transforms(mean, std, config, zca_params=zca_params)
 
     dataset = Cifar101Dataset(images, labels, test_transform)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)

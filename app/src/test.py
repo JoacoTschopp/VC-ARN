@@ -24,6 +24,7 @@ def run_cifar101_evaluation(
     datasets_folder: str,
     batch_size: int = 64,
     shuffle: bool = False,
+    config=None,
 ):
     """Ejecuta la evaluación completa sobre CIFAR-10.1."""
 
@@ -31,6 +32,7 @@ def run_cifar101_evaluation(
         datasets_folder=datasets_folder,
         batch_size=batch_size,
         shuffle=shuffle,
+        config=config,
     )
 
     dataloader = data["dataloader"]
@@ -83,9 +85,11 @@ def run_cifar101_evaluation(
         )
 
         log("\n5. Mostrando ejemplos de predicciones...")
-        images = data["images"].astype(np.float32) / 255.0
-        images = (images - mean.reshape(1, 1, 1, 3)) / std.reshape(1, 1, 1, 3)
-        images = np.transpose(images, (0, 3, 1, 2))
+        images = data["images"].astype(np.float32) / 255.0  # (N, H, W, C)
+        images = np.transpose(images, (0, 3, 1, 2))          # (N, C, H, W)
+        mean_broadcast = mean.reshape(1, 3, 1, 1)
+        std_broadcast = std.reshape(1, 3, 1, 1)
+        images = (images - mean_broadcast) / std_broadcast
 
         pipeline.plot_examples(
             images,

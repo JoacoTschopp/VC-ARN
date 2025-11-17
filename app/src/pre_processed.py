@@ -4,12 +4,17 @@ from typing import Tuple
 import numpy as np
 import torch
 import torchvision.transforms.v2 as T
+from torchvision.transforms.v2 import Transform
 from torchvision import datasets
 
 
 @dataclass
 class TransformConfig:
     img_size: int = 32
+
+    # Upsampling previo
+    use_upsample: bool = False
+    upsample_size: int = 36
 
     # Geométricas básicas
     use_random_resized_crop: bool = False
@@ -38,19 +43,68 @@ class TransformConfig:
     random_erasing_p: float = 0.25
 
     normalize: bool = True
+    use_whitening: bool = False
+    whitening_eps: float = 1e-6
 
 
-def compute_dataset_stats(dataset_root: str):
+class ZCAWhitening(Transform):
+    """Aplica ZCA Whitening utilizando estadísticas precomputadas del dataset."""
+
+    def __init__(self, mean: torch.Tensor, whitening_matrix: torch.Tensor):
+        super().__init__()
+        if mean.dim() != 1:
+            raise ValueError("El vector de media debe ser 1D")
+        if whitening_matrix.dim() != 2:
+            raise ValueError("La matriz de whitening debe ser 2D")
+        if whitening_matrix.size(0) != whitening_matrix.size(1):
+            raise ValueError("La matriz de whitening debe ser cuadrada")
+        if whitening_matrix.size(0) != mean.numel():
+            raise ValueError("Dimensiones incompatibles entre media y matriz ZCA")
+
+        self.register_buffer("mean", mean.float())
+        self.register_buffer("whitening_matrix", whitening_matrix.float())
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        if not isinstance(image, torch.Tensor):
+            raise TypeError("ZCAWhitening espera tensores de tipo torch.Tensor")
+
+        original_shape = image.shape
+        flat = image.reshape(-1).float()
+        centered = flat - self.mean
+        whitened = torch.matmul(self.whitening_matrix, centered)
+        return whitened.reshape(original_shape).to(image.dtype)
+
+
+def compute_dataset_stats(dataset_root: str, compute_zca: bool = False, eps: float = 1e-5):
     cifar10_training = datasets.CIFAR10(dataset_root, train=True, download=True)
     data = cifar10_training.data  # (50000, 32, 32, 3), uint8
 
     mean = np.mean(data, axis=(0, 1, 2)) / 255.0
     std = np.std(data, axis=(0, 1, 2)) / 255.0
 
-    return mean.tolist(), std.tolist()
+    zca_params = None
+    if compute_zca:
+        data_float = data.astype(np.float32) / 255.0  # NHWC
+        data_chw = np.transpose(data_float, (0, 3, 1, 2))  # -> NCHW (C,H,W)
+        num_samples = data_chw.shape[0]
+        flat = data_chw.reshape(num_samples, -1)
+
+        zca_mean = flat.mean(axis=0)
+        flat_centered = flat - zca_mean
+
+        covariance = np.matmul(flat_centered.T, flat_centered) / num_samples
+        eigvals, eigvecs = np.linalg.eigh(covariance)
+        whitening_matrix = eigvecs @ np.diag(1.0 / np.sqrt(eigvals + eps)) @ eigvecs.T
+
+        zca_params = {
+            "mean": zca_mean.astype(np.float32),
+            "matrix": whitening_matrix.astype(np.float32),
+        }
+
+    return mean.tolist(), std.tolist(), zca_params
 
 
-def build_transforms(mean, std, config: TransformConfig):
+def build_transforms(mean, std, config: TransformConfig, zca_params=None):
     """
     Construye transformaciones usando la nueva API torchvision.transforms.v2.
     Pensado para CIFAR10 (32x32).
@@ -62,12 +116,19 @@ def build_transforms(mean, std, config: TransformConfig):
     # -------------------------
     if config.use_random_resized_crop:
         train_transforms.append(T.RandomResizedCrop(config.img_size))
-    elif config.use_random_crop_with_padding:
-        train_transforms.append(
-            T.RandomCrop(config.img_size, padding=config.crop_padding)
-        )
     else:
-        train_transforms.append(T.Resize((config.img_size, config.img_size)))
+        # Upsampling previo opcional
+        base_size = config.upsample_size if config.use_upsample else config.img_size
+        train_transforms.append(T.Resize((base_size, base_size)))
+
+        if config.use_random_crop_with_padding:
+            train_transforms.append(
+                T.RandomCrop(config.img_size, padding=config.crop_padding)
+            )
+        elif config.use_upsample and base_size > config.img_size:
+            train_transforms.append(T.RandomCrop(config.img_size))
+        elif base_size != config.img_size:
+            train_transforms.append(T.Resize((config.img_size, config.img_size)))
 
     if config.use_random_horizontal_flip:
         train_transforms.append(
@@ -112,6 +173,13 @@ def build_transforms(mean, std, config: TransformConfig):
         T.ToDtype(torch.float32, scale=True),     # Escala a [0,1] y dtype float32
     ])
 
+    if config.use_whitening:
+        if zca_params is None:
+            raise ValueError("Se solicitó ZCA Whitening pero no se proporcionaron parámetros precomputados")
+        mean_tensor = torch.from_numpy(zca_params["mean"]).clone()
+        matrix_tensor = torch.from_numpy(zca_params["matrix"]).clone()
+        train_transforms.append(ZCAWhitening(mean_tensor, matrix_tensor))
+
     if config.normalize:
         train_transforms.append(T.Normalize(mean, std))
 
@@ -127,21 +195,25 @@ def build_transforms(mean, std, config: TransformConfig):
 
     # Transformaciones de test: sin augmentations pesadas
     test_transform = T.Compose([
-        T.Resize((config.img_size, config.img_size)),
+        T.Resize((config.upsample_size if config.use_upsample else config.img_size,
+                  config.upsample_size if config.use_upsample else config.img_size)),
+        T.CenterCrop(config.img_size) if config.use_upsample else T.Identity(),
         T.ToImage(),
         T.ToDtype(torch.float32, scale=True),
+        (ZCAWhitening(torch.from_numpy(zca_params["mean"]).clone(),
+                      torch.from_numpy(zca_params["matrix"]).clone())
+         if config.use_whitening else T.Identity()),
         T.Normalize(mean, std) if config.normalize else T.Identity(),
     ])
 
     return train_transform, test_transform
+
 
 # ==============================================================================
 # VARIANTES DE DATA AUGMENTATION
 # ==============================================================================
 
 class config_augmentation:
-    
-
     def __init__(self):
         self.config_sin_augmentation = TransformConfig() # Por defecto solo normaliza
 
@@ -198,4 +270,24 @@ class config_augmentation:
             use_random_erasing=True,
             random_erasing_p=0.15,
             normalize=True,
+        )
+
+        # NAS-CNN: upsample + random crop + flip + whitening
+        self.config_cnn_nas = TransformConfig(
+            img_size=32,
+            use_upsample=True,
+            upsample_size=40,
+            use_random_resized_crop=False,
+            use_random_crop_with_padding=True,
+            crop_padding=4,
+            use_random_horizontal_flip=True,
+            random_horizontal_flip_prob=0.5,
+            use_random_rotation=False,
+            use_autoaugment=False,
+            use_trivial_augment=False,
+            use_color_jitter=False,
+            use_random_erasing=False,
+            normalize=False,
+            use_whitening=True,
+            whitening_eps=1e-6,
         )

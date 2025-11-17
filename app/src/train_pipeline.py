@@ -74,6 +74,9 @@ class TrainingPipeline:
             self.optimizer, patience=lr_patience
             ) if self.config['lr_scheduler'] else None
 
+        # Configuración de visualización de plots
+        self.show_plots = self.config.get('show_plots', True)
+        self.plot_display_time = self.config.get('plot_display_time')
 
         # Estado del entrenamiento
         self.train_losses = []
@@ -665,11 +668,8 @@ class TrainingPipeline:
                         fontsize=11, color='red', fontweight='bold', ha='center',
                         bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.3))
 
-        plt.tight_layout()
-        plt.show()
-        plt.savefig(os.path.join(self.results_dir, "training_curves.png"))
-
-
+        fig.tight_layout()
+        self._finalize_plot(fig, "training_curves.png")
 
     def plot_confusion_matrix(self, predictions, labels, class_names):
         """Genera matriz de confusión"""
@@ -681,9 +681,8 @@ class TrainingPipeline:
         ax.set_xlabel('Predicción', fontweight='bold')
         ax.set_ylabel('Real', fontweight='bold')
         ax.set_title('Matriz de Confusión', fontweight='bold', pad=15)
-        plt.tight_layout()
-        plt.show()
-        plt.savefig(os.path.join(self.results_dir, "confusion_matrix.png"))
+        fig.tight_layout()
+        self._finalize_plot(fig, "confusion_matrix.png")
 
     def plot_examples(self, images, predictions, labels, class_names,
                      mean, std, n_correct=10, n_incorrect=10):
@@ -720,8 +719,8 @@ class TrainingPipeline:
             else:
                 ax.axis('off')
 
-        plt.tight_layout()
-        plt.show()
+        fig.tight_layout()
+        self._finalize_plot(fig, "correct_examples.png")
 
         # Ejemplos incorrectos
         if len(incorrect_idx) > 0:
@@ -744,8 +743,24 @@ class TrainingPipeline:
                 else:
                     ax.axis('off')
 
-            plt.tight_layout()
-            plt.show()
+            fig.tight_layout()
+            self._finalize_plot(fig, "incorrect_examples.png")
 
+    def _finalize_plot(self, fig, filename):
+        """Guarda la figura y la muestra según la configuración."""
+        filepath = os.path.join(self.results_dir, filename)
+        fig.savefig(filepath, bbox_inches='tight')
+
+        if not self.show_plots:
+            plt.close(fig)
+            return
+
+        if self.plot_display_time is not None and self.plot_display_time > 0:
+            plt.show(block=False)
+            plt.pause(self.plot_display_time)
+            plt.close(fig)
+        else:
+            plt.show()
+            plt.close(fig)
 
 print("✓ Clase TrainingPipeline cargada exitosamente")
