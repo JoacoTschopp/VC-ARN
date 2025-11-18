@@ -13,10 +13,10 @@ build/
 .DS_Store
 /app/datasets
 /app/models/*.pth
+*.pth
 
 datasets/
 datasets
-experiments
 models
 plots
 artifacts
