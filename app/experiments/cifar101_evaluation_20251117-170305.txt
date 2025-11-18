@@ -1,0 +1,24 @@
+
+======================================================================
+EVALUACIÓN CIFAR-10.1
+======================================================================
+Accuracy global: 53.79%
+Correctas: 1087/2021
+
+ACCURACY POR CLASE
+======================================================================
+  airplane    : 64.90%  ( 208 samples)
+  automobile  : 69.34%  ( 212 samples)
+  bird        : 70.30%  ( 202 samples)
+  cat         : 24.53%  ( 212 samples)
+  deer        : 77.94%  ( 204 samples)
+  dog         : 11.93%  ( 218 samples)
+  frog        : 67.71%  ( 192 samples)
+  horse       : 57.62%  ( 210 samples)
+  ship        : 55.28%  ( 161 samples)
+  truck       : 42.57%  ( 202 samples)
+======================================================================
+
+4. Generando matriz de confusión...
+
+5. Mostrando ejemplos de predicciones...
