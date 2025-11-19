@@ -14,6 +14,7 @@ import inspect
 import uuid
 import json
 import pandas as pd
+import torch.onnx
 
 # ==============================================================================
 # PIPELINE DE ENTRENAMIENTO
@@ -60,7 +61,7 @@ class TrainingPipeline:
         # Mantenemos solo esta loss por las clases y el label smoothing para pruebas
         self.loss_function = nn.CrossEntropyLoss(
             #https://docs.pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
-            label_smoothing=0.05 # Por defecto es 0.0
+            label_smoothing=config.get('label_smoothing', 0.0) # Por defecto es 0.0
         ).to(self.device)
 
         # LR Scheduler (on plateau, pero se podria cambiar para aceptar otros tipos)
@@ -71,7 +72,12 @@ class TrainingPipeline:
             print(f"Warning: lr_patience ({lr_patience}) > early_stopping_patience ({es_patience})")
 
         self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, patience=lr_patience
+            self.optimizer, 
+            patience=lr_patience,
+            threshold=1e-3,
+            threshold_mode='rel',
+            cooldown=0,
+            min_lr=1e-5,
             ) if self.config['lr_scheduler'] else None
 
         # Configuración de visualización de plots
@@ -267,6 +273,7 @@ class TrainingPipeline:
             'config': self.config
         }
         torch.save(checkpoint, filepath)
+        self._convert_onnx()
 
     def load_checkpoint(self, filename):
         """Carga checkpoint desde archivo"""
@@ -762,5 +769,30 @@ class TrainingPipeline:
         else:
             plt.show()
             plt.close(fig)
+    
+    # Function to Convert to ONNX 
+    def _convert_onnx(self): 
+
+        # Seteamos el modelo en modo inferencia
+        self.model.eval() 
+
+        # Creamos un tensor de entrada dummy en el mismo device que el modelo
+        dummy_input = torch.randn(1, 3, 32, 32, requires_grad=True, device=self.device)
+
+        # Donde guardamos el modelo
+        model_path = os.path.join(self.results_dir, "ImageClassifier.onnx")
+
+        # Exportamos el modelo   
+        torch.onnx.export(self.model,         # modelo a exportar 
+         dummy_input,       # input (or a tuple for multiple inputs) 
+         model_path,       # donde guardamos el modelo  
+         export_params=True,  # guardar los parámetros del modelo 
+         opset_version=10,    # version de ONNX 
+         do_constant_folding=True,  # optimización 
+         input_names = ['modelInput'],   # nombres de los inputs 
+         output_names = ['modelOutput'], # nombres de los outputs 
+         dynamic_axes={'modelInput' : {0 : 'batch_size'},    # axes con longitud variable 
+                                'modelOutput' : {0 : 'batch_size'}}) 
+
 
 print("✓ Clase TrainingPipeline cargada exitosamente")

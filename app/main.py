@@ -46,7 +46,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V8"
+    experiment_name = "Grupo_3_V12"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -93,15 +93,14 @@ def main():
         'lr': 0.1,
         'epochs': 300,
         'batch_size': 128,
-        'es_patience': 10,
+        'es_patience': 20,
         'lr_scheduler': True,
-        'lr_patience': 3,
+        'lr_patience': 10,
         'momentum': 0.9,
         'weight_decay': 1e-4,
         'nesterov': True,
         'use_scheduler': True,
-        #'warmup_epochs': 5,   #No utilizado
-        'label_smoothing': 0.01,
+        'label_smoothing': 0.0,
         'optimizer': 'SGD',
         'base_dir': str(experiment_dir),
         'checkpoint_dir': str(checkpoints_dir),
