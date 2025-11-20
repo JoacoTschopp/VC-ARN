@@ -5,7 +5,8 @@ from os import makedirs, path
 
 import numpy as np
 import torchvision.datasets as datasets
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
+from sklearn.model_selection import train_test_split
 from .pre_processed import config_augmentation
 
 from .pre_processed import TransformConfig, build_transforms, compute_dataset_stats
@@ -78,9 +79,22 @@ def load_data(datasets_folder: str | None = None) -> str:
 
 def load_cifar10(
     datasets_folder: str, config: TransformConfig | None = None
-) -> tuple[datasets.CIFAR10, datasets.CIFAR10, dict]:
-    """Carga CIFAR-10, transformaciones y estadísticas asociadas."""
-
+) -> tuple[Subset, Subset, datasets.CIFAR10, dict, dict]:
+    """
+    Carga CIFAR-10 siguiendo la metodología del paper de Zoph:
+    - 50,000 imágenes de entrenamiento total
+    - 5,000 imágenes para validación (muestra estratificada: 500 por clase)
+    - 45,000 imágenes para entrenamiento
+    - 10,000 imágenes para test (conjunto de test oficial de CIFAR-10)
+    
+    Returns:
+        train_dataset: Subset con 45,000 imágenes de entrenamiento
+        val_dataset: Subset con 5,000 imágenes de validación
+        test_dataset: Dataset con 10,000 imágenes de test
+        training_transformations: Transformaciones para entrenamiento
+        test_transformations: Transformaciones para validación y test
+    """
+    
     config = config or TransformConfig()
 
     mean, std, zca_params = compute_dataset_stats(
@@ -90,14 +104,57 @@ def load_cifar10(
         mean, std, config, zca_params=zca_params
     )
 
-    train_dataset = datasets.CIFAR10(
+    # Cargar el dataset completo de entrenamiento sin transformaciones primero
+    # para obtener los labels y hacer el split estratificado
+    temp_dataset = datasets.CIFAR10(
+        datasets_folder, train=True, download=True, transform=None
+    )
+    
+    # Obtener todos los labels del dataset de entrenamiento
+    all_labels = np.array([label for _, label in temp_dataset])
+    all_indices = np.arange(len(temp_dataset))
+    
+    # Realizar split estratificado: 45,000 train / 5,000 val
+    # test_size=5000 nos da 5,000 para validación
+    # random_state=811219 es la semilla para reproducibilidad
+    train_indices, val_indices = train_test_split(
+        all_indices,
+        test_size=5000,
+        stratify=all_labels,
+        random_state=811219
+    )
+    
+    print("\n" + "="*70)
+    print("SPLIT DE DATOS CIFAR-10 (según paper de Zoph)")
+    print("="*70)
+    print(f"Total de imágenes en train original: {len(temp_dataset)}")
+    print(f"Imágenes para entrenamiento: {len(train_indices)}")
+    print(f"Imágenes para validación: {len(val_indices)}")
+    
+    # Verificar distribución estratificada en validación
+    val_labels = all_labels[val_indices]
+    unique, counts = np.unique(val_labels, return_counts=True)
+    print("\nDistribución de clases en validación:")
+    for label, count in zip(unique, counts):
+        print(f"  Clase {label}: {count} imágenes")
+    print("="*70)
+    
+    # Cargar datasets con las transformaciones apropiadas
+    train_full_dataset = datasets.CIFAR10(
         datasets_folder, train=True, download=True, transform=training_transformations
     )
-    val_dataset = datasets.CIFAR10(
+    val_full_dataset = datasets.CIFAR10(
+        datasets_folder, train=True, download=True, transform=test_transformations
+    )
+    test_dataset = datasets.CIFAR10(
         datasets_folder, train=False, download=True, transform=test_transformations
     )
+    
+    # Crear subsets usando los índices estratificados
+    train_dataset = Subset(train_full_dataset, train_indices)
+    val_dataset = Subset(val_full_dataset, val_indices)
 
-    return train_dataset, val_dataset, training_transformations, test_transformations
+    return train_dataset, val_dataset, test_dataset, training_transformations, test_transformations
 
 
 def load_cifar101(

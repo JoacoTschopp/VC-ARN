@@ -8,7 +8,7 @@ from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR, NASCNN
 from src.auxiliares import compare_models, draw_model, que_fierro_tengo
 from src.load import load_cifar10, load_data
 from src.pre_processed import config_augmentation
-from src.test import run_cifar101_evaluation
+from src.test import run_cifar10_test_evaluation
 from src.train_pipeline import TrainingPipeline
 
 
@@ -46,7 +46,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V12"
+    experiment_name = "NASCNN_V13_OnlyCIFAR10"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -73,7 +73,7 @@ def main():
     # 2. Preprocesamiento de Datos
     # Cargamos los datos de entrenamiento, calculamos media y desvio para normalizar
     augmentation_configs = config_augmentation()
-    cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(
+    cifar10_training, cifar10_validation, cifar10_test, training_transformations, test_transformations = load_cifar10(
         datasets_folder, config=augmentation_configs.config_cnn_nas
     )
     
@@ -145,6 +145,7 @@ def main():
     print("="*70)
     print(f"✓ Train set: {len(train_dataloader.dataset)} imágenes")
     print(f"✓ Validation set: {len(validation_dataloader.dataset)} imágenes")
+    print(f"✓ Test set: {len(cifar10_test)} imágenes")
 
     # Crear modelo
     #model = BaseModel()
@@ -212,9 +213,20 @@ def main():
     print("="*70 + "\n")
 
     # ==============================================================================
-    # TEST
+    # TEST EN CIFAR-10 TEST SET
     # ==============================================================================
-    run_cifar101_evaluation(pipeline, datasets_folder, config=augmentation_configs.config_cnn_nas)
+    # Obtener mean y std del config de transformaciones
+    from src.pre_processed import compute_dataset_stats
+    mean, std, _ = compute_dataset_stats(
+        datasets_folder, compute_zca=augmentation_configs.config_cnn_nas.use_whitening
+    )
+    run_cifar10_test_evaluation(
+        pipeline, 
+        cifar10_test, 
+        mean=mean, 
+        std=std, 
+        batch_size=config['batch_size']
+    )
     
     elapsed_total = time.time() - start_time
     print("\n" + "="*70)
