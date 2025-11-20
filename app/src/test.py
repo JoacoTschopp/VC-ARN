@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from .load import load_cifar101
+from .pre_processed import stats_loader
 
 CLASS_NAMES = [
     "airplane",
@@ -41,6 +42,9 @@ def run_cifar101_evaluation(
     std = np.array(data["std"], dtype=np.float32)
 
     print(f"✓ {len(data['dataset'])} imágenes preprocesadas")
+
+    mean_c101, std_c101 = stats_loader(dataloader)
+    print("CIFAR-10.1 stats (mean, std):", mean_c101, std_c101)
 
     results = pipeline.evaluate(dataloader, dataset_name="CIFAR-10.1")
 

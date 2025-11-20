@@ -84,7 +84,7 @@ def load_cifar10(
     config = config or TransformConfig()
 
     mean, std, zca_params = compute_dataset_stats(
-        datasets_folder, compute_zca=config.use_whitening
+        datasets_folder, compute_zca=config.use_whitening, eps=config.whitening_eps
     )
     training_transformations, test_transformations = build_transforms(
         mean, std, config, zca_params=zca_params
@@ -128,7 +128,7 @@ def load_cifar101(
 
     config = config or TransformConfig()
     mean, std, zca_params = compute_dataset_stats(
-        datasets_folder, compute_zca=config.use_whitening
+        datasets_folder, compute_zca=config.use_whitening, eps=config.whitening_eps
     )
     _, test_transform = build_transforms(mean, std, config, zca_params=zca_params)
 

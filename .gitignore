@@ -17,6 +17,7 @@ build/
 
 datasets/
 datasets
+experiments/
 models
 plots
 artifacts

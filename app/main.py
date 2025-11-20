@@ -7,7 +7,7 @@ import torch
 from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR, NASCNN15
 from src.auxiliares import compare_models, draw_model, que_fierro_tengo
 from src.load import load_cifar10, load_data
-from src.pre_processed import config_augmentation
+from src.pre_processed import config_augmentation, stats_loader
 from src.test import run_cifar101_evaluation
 from src.train_pipeline import TrainingPipeline
 
@@ -71,7 +71,8 @@ def main():
     draw_model(NASCNN15(), output_dir=artifacts_dir)
 
     # 2. Preprocesamiento de Datos
-    # Cargamos los datos de entrenamiento, calculamos media y desvio para normalizar
+    # Cargamos los datos de entrenamiento, calculamos media y desvío para normalizar
+
     augmentation_configs = config_augmentation()
     cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(
         datasets_folder, config=augmentation_configs.config_cnn_nas
@@ -143,8 +144,13 @@ def main():
     print("="*70)
     print("DATASET")
     print("="*70)
-    print(f"✓ Train set: {len(train_dataloader.dataset)} imágenes")
-    print(f"✓ Validation set: {len(validation_dataloader.dataset)} imágenes")
+    print(f" Train set: {len(train_dataloader.dataset)} imágenes")
+    print(f" Validation set: {len(validation_dataloader.dataset)} imágenes")
+
+    mean_tr, std_tr = stats_loader(train_dataloader)
+    mean_val, std_val = stats_loader(validation_dataloader)
+    print("Train stats (mean, std):", mean_tr, std_tr)
+    print("Valid stats (mean, std):", mean_val, std_val)
 
     # Crear modelo
     #model = BaseModel()

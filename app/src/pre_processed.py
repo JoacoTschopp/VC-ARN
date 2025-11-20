@@ -166,7 +166,7 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
         )
 
     # -------------------------
-    # 4) Conversión a tensor + normalización
+    # 4) Conversión a tensor + normalización / whitening
     # -------------------------
     train_transforms.extend([
         T.ToImage(),                              # PIL/ndarray -> Tensor (C,H,W)
@@ -209,6 +209,14 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
     return train_transform, test_transform
 
 
+def stats_loader(loader, max_batches: int = 10):
+    xs = []
+    for i, (x, _) in enumerate(loader):
+        xs.append(x)
+        if i + 1 >= max_batches:
+            break
+    x = torch.cat(xs, dim=0)
+    return x.mean(dim=[0, 2, 3]), x.std(dim=[0, 2, 3])
 # ==============================================================================
 # VARIANTES DE DATA AUGMENTATION
 # ==============================================================================
