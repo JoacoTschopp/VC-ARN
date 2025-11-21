@@ -102,7 +102,7 @@ def main():
         'nesterov': True,
         'use_scheduler': True,
         'label_smoothing': 0.0,
-        'optimizer': 'SGD',
+        'optimizer': 'AdamW',
         'base_dir': str(experiment_dir),
         'checkpoint_dir': str(checkpoints_dir),
         'experiment_dir': str(experiment_dir),
@@ -110,6 +110,8 @@ def main():
         'artifacts_dir': str(artifacts_dir),
         'show_plots': False,          # o True para mostrarlos
         'plot_display_time': 5,       # opcional si quieres autocierre en segundos
+        'use_whitening': True,
+        'whitening_eps': 1e-6,
     }
 
     # Actualizar variables globales para compatibilidad
@@ -156,6 +158,7 @@ def main():
     #model = BaseModel()
     #model = SimpleCNN()
     #model = ImprovedCNN()
+    #model = ImprovedTwoCNN()
     #model = ResNetCIFAR()
     model = NASCNN15()
 

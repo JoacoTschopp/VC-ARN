@@ -212,8 +212,8 @@ class TrainingPipeline:
                       f"Val Acc: {val_acc:.2%}",
                       end="")
 
-                # Guardar mejor modelo
-                if val_acc > self.best_val_acc:
+                # Guardar mejor modelo (solo si mejora al menos 0.1 en accuracy)
+                if (val_acc - self.best_val_acc) >= 0.1:
                     self.best_val_acc = val_acc
                     self.best_epoch = epoch
                     patience_counter = 0
