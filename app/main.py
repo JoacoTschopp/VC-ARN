@@ -4,7 +4,7 @@ import time
 
 import torch
 
-from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR, NASCNN15
+from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR, NASCNN15, ImprovedTwoCNN
 from src.auxiliares import compare_models, draw_model, que_fierro_tengo
 from src.load import load_cifar10, load_data
 from src.pre_processed import config_augmentation, stats_loader
@@ -46,7 +46,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V12"
+    experiment_name = "Grupo_3_V15"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -68,14 +68,14 @@ def main():
     compare_models()
 
     # Dibujar arquitectura
-    draw_model(NASCNN15(), output_dir=artifacts_dir)
+    draw_model(ImprovedTwoCNN(), output_dir=artifacts_dir)
 
     # 2. Preprocesamiento de Datos
     # Cargamos los datos de entrenamiento, calculamos media y desvío para normalizar
 
     augmentation_configs = config_augmentation()
     cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(
-        datasets_folder, config=augmentation_configs.config_cnn_nas
+        datasets_folder, config=augmentation_configs.config_cnn_two
     )
     
     elapsed_prep = time.time() - start_time
@@ -92,17 +92,17 @@ def main():
     config = {
         'experiment_name': experiment_name,
         'lr': 0.1,
-        'epochs': 300,
-        'batch_size': 128,
-        'es_patience': 20,
+        'epochs': 200,
+        'batch_size': 64,
+        'es_patience': 15,
         'lr_scheduler': True,
-        'lr_patience': 10,
+        'lr_patience': 5,
         'momentum': 0.9,
         'weight_decay': 1e-4,
         'nesterov': True,
         'use_scheduler': True,
         'label_smoothing': 0.0,
-        'optimizer': 'AdamW',
+        'optimizer': 'SGD',
         'base_dir': str(experiment_dir),
         'checkpoint_dir': str(checkpoints_dir),
         'experiment_dir': str(experiment_dir),
@@ -158,9 +158,9 @@ def main():
     #model = BaseModel()
     #model = SimpleCNN()
     #model = ImprovedCNN()
-    #model = ImprovedTwoCNN()
+    model = ImprovedTwoCNN()
     #model = ResNetCIFAR()
-    model = NASCNN15()
+    #model = NASCNN15()
 
     print("="*70)
     print("SELECCIÓN DE MODELO")

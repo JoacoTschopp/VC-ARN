@@ -492,3 +492,81 @@ class NASCNN15(nn.Module):
     def predict(self, x):
         logits = self.forward(x)
         return self.final_activation(logits)
+
+# ==============================================================================
+# OPCIÓN 2: CNN Mejorada con Batch Normalization
+# ==============================================================================
+class BasicBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1, use_dropout=False, p_dropout=0.0):
+        super().__init__()
+        self.conv1 = nn.Conv2d(
+            in_channels, out_channels,
+            kernel_size=3, stride=stride, padding=1, bias=False
+        )
+        self.bn1 = nn.BatchNorm2d(out_channels)
+
+        self.conv2 = nn.Conv2d(
+            out_channels, out_channels,
+            kernel_size=3, stride=1, padding=1, bias=False
+        )
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        self.use_dropout = use_dropout
+        self.dropout = nn.Dropout2d(p_dropout) if use_dropout and p_dropout > 0 else nn.Identity()
+
+        if stride != 1 or in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels),
+            )
+        else:
+            self.shortcut = nn.Identity()
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.dropout(out)
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+
+class ImprovedTwoCNN(nn.Module):
+    def __init__(self, num_classes=10, base_width=64, p_dropout=0.3):
+        super().__init__()
+
+        # Stem
+        self.stem = nn.Sequential(
+            nn.Conv2d(3, base_width, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(base_width),
+            nn.ReLU(inplace=True),
+        )
+
+        # 32x32, canales = base_width
+        self.layer1 = nn.Sequential(
+            BasicBlock(base_width, base_width, stride=1, use_dropout=False),
+            BasicBlock(base_width, base_width, stride=1, use_dropout=False),
+        )
+
+        # 16x16, canales = 2*base_width
+        self.layer2 = nn.Sequential(
+            BasicBlock(base_width, base_width * 2, stride=2, use_dropout=True, p_dropout=p_dropout),
+            BasicBlock(base_width * 2, base_width * 2, stride=1, use_dropout=False),
+        )
+
+        # 8x8, canales = 4*base_width
+        self.layer3 = nn.Sequential(
+            BasicBlock(base_width * 2, base_width * 4, stride=2, use_dropout=True, p_dropout=p_dropout),
+            BasicBlock(base_width * 4, base_width * 4, stride=1, use_dropout=False),
+        )
+
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.fc = nn.Linear(base_width * 4, num_classes)
+
+    def forward(self, x):
+        x = self.stem(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+        return self.fc(x)

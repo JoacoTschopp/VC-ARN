@@ -281,7 +281,7 @@ class config_augmentation:
         )
 
         # NAS-CNN: upsample + random crop + flip + whitening
-        self.config_cnn_nas = TransformConfig(
+        self.config_cnn_two = TransformConfig(
             img_size=32,
             use_upsample=True,
             upsample_size=40,
@@ -292,14 +292,14 @@ class config_augmentation:
             random_horizontal_flip_prob=0.5,
             use_random_rotation=True,
             rotation_degrees=15,
-            use_autoaugment=True,
-            use_trivial_augment=True,
-            use_color_jitter=True,
+            use_autoaugment=False,
+            use_trivial_augment=False,
+            use_color_jitter=False,
             jitter_brightness=0.3,
             jitter_contrast=0.3,
             jitter_saturation=0.3,
             jitter_hue=0.1,
-            use_random_erasing=True,
+            use_random_erasing=False,
             random_erasing_p=0.15,
             normalize=False,
             use_whitening=True,
