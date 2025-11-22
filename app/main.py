@@ -4,9 +4,9 @@ import time
 
 import torch
 
-from src.arqui_cnn import BaseModel, SimpleCNN, ImprovedCNN, ResNetCIFAR, NASCNN15
-from src.auxiliares import compare_models, draw_model, que_fierro_tengo
-from src.load import load_cifar10, load_data
+from src.arqui_cnn import NASCNN15
+from src.auxiliares import draw_model, que_fierro_tengo, show_nascnn15_info
+from src.load import load_cifar10
 from src.pre_processed import config_augmentation
 from src.test import run_cifar10_test_evaluation
 from src.train_pipeline import TrainingPipeline
@@ -46,7 +46,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "NASCNN_V13_OnlyCIFAR10"
+    experiment_name = "NASCNN15_Production"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -58,14 +58,11 @@ def main():
         directory.mkdir(parents=True, exist_ok=True)
 
     # Crear carpeta datasets
-    datasets = Path("../datasets")
+    datasets_folder = Path("../datasets")
+    datasets_folder.mkdir(parents=True, exist_ok=True)
     
-    # 1. Cargar datos
-    augmentation_configs = config_augmentation()
-    datasets_folder = load_data(datasets_folder=str(datasets))
-
-    # Comparar arquitecturas
-    compare_models()
+    # 1. Información de la arquitectura
+    show_nascnn15_info()
 
     # Dibujar arquitectura
     draw_model(NASCNN15(), output_dir=artifacts_dir)
@@ -74,7 +71,7 @@ def main():
     # Cargamos los datos de entrenamiento, calculamos media y desvio para normalizar
     augmentation_configs = config_augmentation()
     cifar10_training, cifar10_validation, cifar10_test, training_transformations, test_transformations = load_cifar10(
-        datasets_folder, config=augmentation_configs.config_cnn_nas
+        str(datasets_folder), config=augmentation_configs.config_cnn_nas
     )
     
     elapsed_prep = time.time() - start_time
@@ -148,10 +145,6 @@ def main():
     print(f"✓ Test set: {len(cifar10_test)} imágenes")
 
     # Crear modelo
-    #model = BaseModel()
-    #model = SimpleCNN()
-    #model = ImprovedCNN()
-    #model = ResNetCIFAR()
     model = NASCNN15()
 
     print("="*70)

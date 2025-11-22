@@ -1,52 +1,51 @@
+"""
+Utilidades auxiliares para el proyecto NASCNN15
+
+Funciones para visualización de arquitecturas, detección de hardware,
+y despliegue de información del modelo.
+"""
+
 from pathlib import Path
 
 import torch
 import torch.nn as nn
-from .arqui_cnn import BaseModel, ImprovedCNN, ResNetCIFAR, SimpleCNN, NASCNN15
+from .arqui_cnn import NASCNN15
 
 try:
     from torchview import draw_graph
-
     TORCHVIEW_AVAILABLE = True
 except ImportError:
     TORCHVIEW_AVAILABLE = False
 
 
 # ==============================================================================
-# FUNCIÓN AUXILIAR: Comparar arquitecturas
+# FUNCIÓN: Información de NASCNN15
 # ==============================================================================
-def compare_models():
-    """Compara las 4 arquitecturas disponibles"""
-    models = {
-        "BaseModel": BaseModel(),
-        "SimpleCNN": SimpleCNN(),
-        "ImprovedCNN": ImprovedCNN(),
-        "ResNetCIFAR": ResNetCIFAR(),
-        "NASCNN15": NASCNN15(),
-    }
-
+def show_nascnn15_info():
+    """Muestra información detallada de la arquitectura NASCNN15."""
+    model = NASCNN15()
+    
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
     print("=" * 70)
-    print("COMPARACIÓN DE ARQUITECTURAS")
+    print("ARQUITECTURA: NASCNN15")
     print("=" * 70)
-
-    for name, model in models.items():
-        total_params = sum(p.numel() for p in model.parameters())
-        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-        print(f"\n{name}")
-        print(f"  Parámetros totales: {total_params:,}")
-        print(f"  Parámetros entrenables: {trainable_params:,}")
-
-        # Calcular tamaño en MB
-        param_size = total_params * 4 / (1024**2)  # 4 bytes por parámetro (float32)
-        print(f"  Tamaño estimado: {param_size:.2f} MB")
-
-    print("\n" + "=" * 70)
-    print("RECOMENDACIÓN: ImprovedCNN para mejor balance complejidad/rendimiento")
+    print(f"Parámetros totales: {total_params:,}")
+    print(f"Parámetros entrenables: {trainable_params:,}")
+    print(f"Tamaño estimado: {total_params * 4 / (1024**2):.2f} MB")
+    print()
+    print("Características:")
+    print("  - 15 capas convolucionales con skip connections")
+    print("  - Kernels: 1×1, 3×3, 3×7, 5×5, 5×7, 7×1, 7×3, 7×5, 7×7")
+    print("  - Filtros: 36 o 48 por capa")
+    print("  - Resolución constante: 32×32 (sin stride/pooling)")
+    print("  - Accuracy esperado: 91%+ en CIFAR-10 test")
+    print()
+    print("Referencia:")
+    print("  Zoph, B., & Le, Q. V. (2017)")
+    print("  Neural Architecture Search with Reinforcement Learning. ICLR.")
     print("=" * 70)
-
-    print("✓ Arquitecturas CNN cargadas exitosamente")
-    print("\nPara comparar modelos ejecuta: compare_models()")
 
 
 def draw_model(model: nn.Module, output_dir=None):
