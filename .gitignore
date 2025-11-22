@@ -1,4 +1,3 @@
-.ipynb_checkpoints
 .venv
 __pycache__/
 *.pyc
@@ -18,13 +17,11 @@ build/
 
 datasets/
 datasets
-models
-plots
-artifacts
-Notebook_materia
+
+# NAS outputs
 
 *.cfg
 *.toml
-
-/Clases_Practicas/
+/experiments/
 /Salidas_Experimentos/
+
