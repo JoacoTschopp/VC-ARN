@@ -46,7 +46,7 @@ def main():
     que_fierro_tengo()
 
     # Experimento Nombre y rutas de salida
-    experiment_name = "Grupo_3_V15"
+    experiment_name = "Grupo_3_V16"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
 
@@ -93,7 +93,7 @@ def main():
         'experiment_name': experiment_name,
         'lr': 0.1,
         'epochs': 200,
-        'batch_size': 64,
+        'batch_size': 128,
         'es_patience': 15,
         'lr_scheduler': True,
         'lr_patience': 5,
@@ -223,7 +223,7 @@ def main():
     # ==============================================================================
     # TEST
     # ==============================================================================
-    run_cifar101_evaluation(pipeline, datasets_folder, config=augmentation_configs.config_cnn_nas)
+    run_cifar101_evaluation(pipeline, datasets_folder, config=augmentation_configs.config_cnn_two)
     
     elapsed_total = time.time() - start_time
     print("\n" + "="*70)

@@ -288,9 +288,9 @@ class config_augmentation:
             use_random_resized_crop=True,
             use_random_crop_with_padding=True,
             crop_padding=4,
-            use_random_horizontal_flip=True,
+            use_random_horizontal_flip=False,
             random_horizontal_flip_prob=0.5,
-            use_random_rotation=True,
+            use_random_rotation=False,
             rotation_degrees=15,
             use_autoaugment=False,
             use_trivial_augment=False,
@@ -301,8 +301,8 @@ class config_augmentation:
             jitter_hue=0.1,
             use_random_erasing=False,
             random_erasing_p=0.15,
-            normalize=False,
-            use_whitening=True,
+            normalize=True,
+            use_whitening=False,
             whitening_eps=1e-6,
         )
 

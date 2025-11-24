@@ -521,6 +521,7 @@ class BasicBlock(nn.Module):
             )
         else:
             self.shortcut = nn.Identity()
+        
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
@@ -561,6 +562,9 @@ class ImprovedTwoCNN(nn.Module):
 
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(base_width * 4, num_classes)
+        
+        # Softmax sólo para .predict()
+        self.final_activation = nn.Softmax(dim=1)
 
     def forward(self, x):
         x = self.stem(x)
@@ -570,3 +574,6 @@ class ImprovedTwoCNN(nn.Module):
         x = self.pool(x)
         x = torch.flatten(x, 1)
         return self.fc(x)
+
+    def predict(self, x):
+        return self.final_activation(self.forward(x))

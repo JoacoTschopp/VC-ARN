@@ -213,7 +213,7 @@ class TrainingPipeline:
                       end="")
 
                 # Guardar mejor modelo (solo si mejora al menos 0.1 en accuracy)
-                if (val_acc - self.best_val_acc) >= 0.1:
+                if (val_acc - self.best_val_acc) >= 0.001:
                     self.best_val_acc = val_acc
                     self.best_epoch = epoch
                     patience_counter = 0
