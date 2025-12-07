@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Curvas por época</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 24px; }
+      #controls { margin-bottom: 16px; display: flex; gap: 12px; align-items: center; }
+      #panels { display: flex; flex-direction: column; gap: 32px; }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px 20px;
+        border: 1px solid #e3e3e3;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      }
+      .panel-header { font-weight: 600; font-size: 1.05rem; }
+      .panel-body { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+      .panel-chart { flex: 1 1 auto; min-width: 320px; max-width: 900px; }
+      .panel-chart .chart-surface { width: 100%; height: 480px; }
+      .panel-legend { flex: 0 0 240px; min-width: 220px; display: flex; flex-direction: column; gap: 12px; font-size: 0.95rem; overflow: visible; }
+      label span { font-weight: 600; margin-left: 6px; }
+      .legend-section { display: flex; flex-direction: column; gap: 4px; }
+      .legend-title { font-weight: 600; font-size: 0.9rem; color: #333; }
+      .legend-items { display: flex; flex-wrap: wrap; gap: 10px; }
+      .legend-item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+      .legend-swatch { width: 14px; height: 14px; border-radius: 3px; }
+      .legend-line { width: 20px; height: 0; border-bottom: 2px dashed currentColor; }
+
+      @media (min-width: 1100px) {
+        .panel-body { flex-wrap: nowrap; }
+      }
+
+      @media (max-width: 900px) {
+        .panel-body { flex-direction: column; }
+        .panel-legend { flex: 1 1 auto; overflow-x: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ganancia y pérdida de experimentos por época</h1>
+
+    <div id="controls">
+      <button id="play">▶︎ Play</button>
+      <label>
+        <span>Época:</span>
+        <input id="epoch" type="range" min="1" value="1" />
+        <output id="epochValue">1</output>
+      </label>
+    </div>
+
+    <div id="panels">
+      <section class="panel" id="metric-panel">
+        <div class="panel-header">Ganancia (val_metric)</div>
+        <div class="panel-body">
+          <div class="panel-chart">
+            <div id="metric-chart" class="chart-surface"></div>
+          </div>
+          <div class="panel-legend" id="metric-legend"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="loss-panel">
+        <div class="panel-header">Pérdida (val_loss)</div>
+        <div class="panel-body">
+          <div class="panel-chart">
+            <div id="loss-chart" class="chart-surface"></div>
+          </div>
+          <div class="panel-legend" id="loss-legend"></div>
+        </div>
+      </section>
+    </div>
+
+    
+
+    <div id="panel-2">
+      <p style="margin-top: 32px;">
+        ¿Querés probar el mejor modelo con tus propias imágenes? Visitá
+        <a href="ejemplos.html">Ejemplos de test sobre el mejor modelo</a>.
+      </p>
+    </div>
+      
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
