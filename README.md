@@ -131,10 +131,6 @@ VC-ARN/
 └── README.md               # Este archivo
 ```
 
-## 👨‍💻 Autor
-
-**Esp. Joaquín S Tschopp**
-
 ---
 
 *Este proyecto demuestra la aplicación práctica de Redes Neuronales Convolucionales para la clasificación de imágenes, utilizando técnicas avanzadas de Deep Learning y Visión por Computadora.*
