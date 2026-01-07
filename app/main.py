@@ -13,7 +13,7 @@ from src.train_pipeline import TrainingPipeline
 
 
 def format_elapsed_time(elapsed_seconds: float) -> str:
-    """Formatea tiempo transcurrido en formato legible."""
+    """Format elapsed time in human-readable format."""
     hours = int(elapsed_seconds // 3600)
     minutes = int((elapsed_seconds % 3600) // 60)
     seconds = int(elapsed_seconds % 60)
@@ -31,7 +31,7 @@ def format_elapsed_time(elapsed_seconds: float) -> str:
 
 def main():
     # ============================================================================
-    # INICIO DEL EXPERIMENTO
+    # EXPERIMENT START
     # ============================================================================
     start_time = time.time()
     start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -42,10 +42,10 @@ def main():
     print(f"Fecha y hora: {start_datetime}")
     print("="*70 + "\n")
 
-    #Que fierro tengo??
+    # Detect available hardware
     que_fierro_tengo()
 
-    # Experimento Nombre y rutas de salida
+    # Experiment name and output paths
     experiment_name = "Grupo_3_V16"
     experiments_root = Path("../experiments")
     experiment_dir = experiments_root / experiment_name
@@ -57,21 +57,21 @@ def main():
     for directory in (experiment_dir, checkpoints_dir, plots_dir, artifacts_dir):
         directory.mkdir(parents=True, exist_ok=True)
 
-    # Crear carpeta datasets
+    # Create datasets folder
     datasets = Path("../datasets")
     
-    # 1. Cargar datos
+    # 1. Load data
     augmentation_configs = config_augmentation()
     datasets_folder = load_data(datasets_folder=str(datasets))
 
-    # Comparar arquitecturas
+    # Compare architectures
     compare_models()
 
-    # Dibujar arquitectura
+    # Draw architecture
     draw_model(ImprovedTwoCNN(), output_dir=artifacts_dir)
 
-    # 2. Preprocesamiento de Datos
-    # Cargamos los datos de entrenamiento, calculamos media y desvío para normalizar
+    # 2. Data Preprocessing
+    # Load training data, compute mean and std for normalization
 
     augmentation_configs = config_augmentation()
     cifar10_training, cifar10_validation, training_transformations, test_transformations = load_cifar10(
@@ -84,9 +84,9 @@ def main():
     print(f"  Tiempo transcurrido: {format_elapsed_time(elapsed_prep)}")
     print("="*70 + "\n")
 
-    # 3. Entrenamiento
+    # 3. Training
     # ==============================================================================
-    # CONFIGURACIÓN DE HIPERPARÁMETROS
+    # HYPERPARAMETER CONFIGURATION
     # ==============================================================================
 
     config = {
@@ -108,13 +108,13 @@ def main():
         'experiment_dir': str(experiment_dir),
         'plots_dir': str(plots_dir),
         'artifacts_dir': str(artifacts_dir),
-        'show_plots': False,          # o True para mostrarlos
-        'plot_display_time': 5,       # opcional si quieres autocierre en segundos
+        'show_plots': False,          # or True to display plots
+        'plot_display_time': 5,       # optional if you want auto-close in seconds
         'use_whitening': True,
         'whitening_eps': 1e-6,
     }
 
-    # Actualizar variables globales para compatibilidad
+    # Update global variables for compatibility
     LR = config['lr']
     EPOCHS = config['epochs']
     BATCH_SIZE = config['batch_size']
@@ -128,10 +128,10 @@ def main():
 
 
     # ==============================================================================
-    # PREPARACIÓN DE DATOS Y MODELO
+    # DATA AND MODEL PREPARATION
     # ==============================================================================
 
-    # Crear DataLoaders
+    # Create DataLoaders
     train_dataloader = torch.utils.data.DataLoader(
         cifar10_training, 
         batch_size=config['batch_size'], 
@@ -154,7 +154,7 @@ def main():
     print("Train stats (mean, std):", mean_tr, std_tr)
     print("Valid stats (mean, std):", mean_val, std_val)
 
-    # Crear modelo
+    # Create model
     #model = BaseModel()
     #model = SimpleCNN()
     #model = ImprovedCNN()
@@ -171,14 +171,14 @@ def main():
 
 
 
-    # Crear pipeline de entrenamiento
+    # Create training pipeline
     pipeline = TrainingPipeline(model, config)
 
     print(f"✓ Pipeline inicializado")
     print(f"✓ Total de parámetros: {sum(p.numel() for p in model.parameters()):,}")
 
     # ==============================================================================
-    # ENTRENAMIENTO
+    # TRAINING
     # ==============================================================================
 
     pipeline.train(train_dataloader, validation_dataloader)
@@ -190,27 +190,27 @@ def main():
     print("="*70 + "\n")
     
     # ==============================================================================
-    # REANUDAR ENTRENAMIENTO (si fue interrumpido)
+    # RESUME TRAINING (if interrupted)
     # ==============================================================================
 
-    # Descomenta y ejecuta si fue interrumpido:
+    # Uncomment and run if interrupted:
     # pipeline.resume_training('interrupted_checkpoint.pth', train_dataloader, validation_dataloader)
 
     print("! Para reanudar, descomenta la línea anterior y ejecuta esta celda")
 
     # ==============================================================================
-    # VISUALIZACIÓN DE PREPROCESAMIENTOS E HIPERPARÁMETROS DEL ENTRENAMIENTO
+    # VISUALIZATION OF PREPROCESSING AND TRAINING HYPERPARAMETERS
     # ==============================================================================
     pipeline.register_experiment(training_transformations, test_transformations)
 
     # ==============================================================================
-    # VISUALIZACIÓN DE CURVAS DE ENTRENAMIENTO
+    # TRAINING CURVES VISUALIZATION
     # ==============================================================================
 
     pipeline.plot_training_curves()
 
     # ==============================================================================
-    # SUMARIZACIÓN DE EXPERIMENTOS
+    # EXPERIMENT SUMMARIZATION
     # ==============================================================================
     summary = pipeline.summarize_experiments(sort_by="results.best_val_acc", top_k=5)
     
@@ -221,7 +221,7 @@ def main():
     print("="*70 + "\n")
 
     # ==============================================================================
-    # TEST
+    # TESTING
     # ==============================================================================
     run_cifar101_evaluation(pipeline, datasets_folder, config=augmentation_configs.config_cnn_two)
     
@@ -232,7 +232,7 @@ def main():
     print("="*70 + "\n")
     
     # ============================================================================
-    # RESUMEN FINAL
+    # FINAL SUMMARY
     # ============================================================================
     end_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print("="*70)

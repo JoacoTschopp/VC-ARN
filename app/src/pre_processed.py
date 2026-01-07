@@ -16,7 +16,7 @@ class TransformConfig:
     use_upsample: bool = False
     upsample_size: int = 36
 
-    # Geométricas básicas
+    # Basic geometric transformations
     use_random_resized_crop: bool = False
     use_random_crop_with_padding: bool = False
     crop_padding: int = 4
@@ -27,18 +27,18 @@ class TransformConfig:
     use_random_rotation: bool = False
     rotation_degrees: float = 15.0
 
-    # Políticas avanzadas
+    # Advanced policies
     use_autoaugment: bool = False
     use_trivial_augment: bool = False
 
-    # Fotométricas simples
+    # Simple photometric transformations
     use_color_jitter: bool = False
     jitter_brightness: float = 0.2
     jitter_contrast: float = 0.2
     jitter_saturation: float = 0.2
     jitter_hue: float = 0.1
 
-    # Regularización en imagen
+    # Image regularization
     use_random_erasing: bool = False
     random_erasing_p: float = 0.25
 
@@ -48,7 +48,7 @@ class TransformConfig:
 
 
 class ZCAWhitening(Transform):
-    """Aplica ZCA Whitening utilizando estadísticas precomputadas del dataset."""
+    """Apply ZCA Whitening using precomputed dataset statistics."""
 
     def __init__(self, mean: torch.Tensor, whitening_matrix: torch.Tensor):
         super().__init__()
@@ -106,18 +106,18 @@ def compute_dataset_stats(dataset_root: str, compute_zca: bool = False, eps: flo
 
 def build_transforms(mean, std, config: TransformConfig, zca_params=None):
     """
-    Construye transformaciones usando la nueva API torchvision.transforms.v2.
-    Pensado para CIFAR10 (32x32).
+    Build transformations using the new torchvision.transforms.v2 API.
+    Designed for CIFAR-10 (32x32).
     """
     train_transforms = []
 
     # -------------------------
-    # 1) Geométricas iniciales
+    # 1) Initial geometric transformations
     # -------------------------
     if config.use_random_resized_crop:
         train_transforms.append(T.RandomResizedCrop(config.img_size))
     else:
-        # Upsampling previo opcional
+        # Optional previous upsampling
         base_size = config.upsample_size if config.use_upsample else config.img_size
         train_transforms.append(T.Resize((base_size, base_size)))
 
@@ -141,8 +141,8 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
         )
 
     # -------------------------
-    # 2) Políticas de AutoAugment
-    #    (incluyen color jitter, etc.)
+    # 2) AutoAugment policies
+    #    (include color jitter, etc.)
     # -------------------------
     if config.use_autoaugment:
         train_transforms.append(
@@ -152,8 +152,8 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
         train_transforms.append(T.TrivialAugmentWide())
 
     # -------------------------
-    # 3) Fotométricas simples
-    #    (solo si NO usamos una política automática)
+    # 3) Simple photometric transformations
+    #    (only if NOT using automatic policy)
     # -------------------------
     if config.use_color_jitter and not (config.use_autoaugment or config.use_trivial_augment):
         train_transforms.append(
@@ -166,7 +166,7 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
         )
 
     # -------------------------
-    # 4) Conversión a tensor + normalización / whitening
+    # 4) Tensor conversion + normalization / whitening
     # -------------------------
     train_transforms.extend([
         T.ToImage(),                              # PIL/ndarray -> Tensor (C,H,W)
@@ -184,7 +184,7 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
         train_transforms.append(T.Normalize(mean, std))
 
     # -------------------------
-    # 5) Regularización final
+    # 5) Final regularization
     # -------------------------
     if config.use_random_erasing:
         train_transforms.append(
@@ -193,7 +193,7 @@ def build_transforms(mean, std, config: TransformConfig, zca_params=None):
 
     train_transform = T.Compose(train_transforms)
 
-    # Transformaciones de test: sin augmentations pesadas
+    # Test transformations: without heavy augmentations
     test_transform = T.Compose([
         T.Resize((config.upsample_size if config.use_upsample else config.img_size,
                   config.upsample_size if config.use_upsample else config.img_size)),
@@ -218,7 +218,7 @@ def stats_loader(loader, max_batches: int = 10):
     x = torch.cat(xs, dim=0)
     return x.mean(dim=[0, 2, 3]), x.std(dim=[0, 2, 3])
 # ==============================================================================
-# VARIANTES DE DATA AUGMENTATION
+# DATA AUGMENTATION VARIANTS
 # ==============================================================================
 
 class config_augmentation:

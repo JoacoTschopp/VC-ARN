@@ -27,7 +27,7 @@ def run_cifar101_evaluation(
     shuffle: bool = False,
     config=None,
 ):
-    """Ejecuta la evaluación completa sobre CIFAR-10.1."""
+    """Execute complete evaluation on CIFAR-10.1."""
 
     data = load_cifar101(
         datasets_folder=datasets_folder,

@@ -4,14 +4,14 @@ import torch.nn.functional as F
 
 
 # ==============================================================================
-# ARQUITECTURA DEL MODELO 1.0
+# MODEL ARCHITECTURE 1.0
 # ==============================================================================
 
 
 class BaseModel(nn.Module):
     """
-    Modelo base con arquitectura fully connected de 2 capas.
-    Para clasificación de imágenes en 10 clases usando datos de CIFAR10
+    Base model with 2-layer fully connected architecture.
+    For image classification into 10 classes using CIFAR-10 data
     """
 
     def __init__(self):
@@ -27,7 +27,7 @@ class BaseModel(nn.Module):
         return self.model(inputs)
 
     def predict(self, inputs):
-        """Predicción con softmax"""
+        """Prediction with softmax"""
         return self.final_activation(self.model(inputs))
 
 
@@ -35,31 +35,31 @@ class BaseModel(nn.Module):
 
 
 # ==============================================================================
-# OPCIÓN 1: CNN Simple
+# OPTION 1: Simple CNN
 # ==============================================================================
 class SimpleCNN(nn.Module):
     """
-    CNN básica con 3 bloques convolucionales
+    Basic CNN with 3 convolutional blocks
 
-    Arquitectura:
-    - 3 bloques Conv -> ReLU -> MaxPool
-    - 2 capas fully connected
-    - Dropout para regularización
+    Architecture:
+    - 3 blocks Conv -> ReLU -> MaxPool
+    - 2 fully connected layers
+    - Dropout for regularization
 
     """
 
     def __init__(self):
         super(SimpleCNN, self).__init__()
 
-        # Bloque 1: 3 -> 32 canales
+        # Block 1: 3 -> 32 channels
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.pool1 = nn.MaxPool2d(2, 2)  # 32x32 -> 16x16
 
-        # Bloque 2: 32 -> 64 canales
+        # Block 2: 32 -> 64 channels
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool2 = nn.MaxPool2d(2, 2)  # 16x16 -> 8x8
 
-        # Bloque 3: 64 -> 128 canales
+        # Block 3: 64 -> 128 channels
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.pool3 = nn.MaxPool2d(2, 2)  # 8x8 -> 4x4
 
@@ -89,7 +89,7 @@ class SimpleCNN(nn.Module):
         # Flatten
         x = x.view(-1, 128 * 4 * 4)
 
-        # FC con dropout
+        # FC with dropout
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
@@ -105,15 +105,15 @@ class SimpleCNN(nn.Module):
 # ==============================================================================
 class ImprovedCNN(nn.Module):
     """
-    CNN con Batch Normalization y arquitectura más profunda
+    CNN with Batch Normalization and deeper architecture
 
-    Arquitectura:
-    - 4 bloques Conv -> BatchNorm -> ReLU -> MaxPool
-    - 2 capas fully connected con BatchNorm
-    - Dropout para regularización
+    Architecture:
+    - 4 blocks Conv -> BatchNorm -> ReLU -> MaxPool
+    - 2 fully connected layers with BatchNorm
+    - Dropout for regularization
 
-    Parámetros: ~340K
-    Accuracy esperado: ~75-80%
+    Parameters: ~340K
+    Expected accuracy: ~75-80%
 
     """
 
@@ -143,7 +143,7 @@ class ImprovedCNN(nn.Module):
         self.bn5 = nn.BatchNorm2d(512)
         self.pool5 = nn.MaxPool2d(2, 2)  # 8x8 -> 4x4
 
-        # Fully connected con BatchNorm
+        # Fully connected with BatchNorm
         self.fc1 = nn.Linear(512 * 4 * 4, 512)
         self.bn_fc1 = nn.BatchNorm1d(512)
         self.fc2 = nn.Linear(512, 10)
@@ -179,7 +179,7 @@ class ImprovedCNN(nn.Module):
         # Flatten
         x = x.view(-1, 512 * 4 * 4)
 
-        # FC con BatchNorm y Dropout
+        # FC with BatchNorm and Dropout
         x = F.relu(self.bn_fc1(self.fc1(x)))
         x = self.dropout(x)
         x = self.fc2(x)
@@ -191,10 +191,10 @@ class ImprovedCNN(nn.Module):
 
 
 # ==============================================================================
-# OPCIÓN 3: ResNet-like con Skip Connections
+# OPTION 3: ResNet-like with Skip Connections
 # ==============================================================================
 class ResidualBlock(nn.Module):
-    """Bloque residual básico con skip connection"""
+    """Basic residual block with skip connection"""
 
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResidualBlock, self).__init__()
@@ -214,7 +214,7 @@ class ResidualBlock(nn.Module):
         )
         self.bn2 = nn.BatchNorm2d(out_channels)
 
-        # Skip connection con ajuste de dimensión
+        # Skip connection with dimension adjustment
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.Sequential(
@@ -239,13 +239,13 @@ class ResidualBlock(nn.Module):
 
 class ResNetCIFAR(nn.Module):
     """
-    ResNet adaptado para CIFAR-10 con skip connections
+    ResNet adapted for CIFAR-10 with skip connections
 
-    Arquitectura:
-    - Capa inicial convolucional
-    - 3 grupos de bloques residuales
+    Architecture:
+    - Initial convolutional layer
+    - 3 groups of residual blocks
     - Global Average Pooling
-    - Fully connected final
+    - Final fully connected layer
 
     """
 
@@ -256,7 +256,7 @@ class ResNetCIFAR(nn.Module):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
 
-        # Grupos de bloques residuales
+        # Groups of residual blocks
         self.layer1 = self._make_layer(64, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(64, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(128, 256, num_blocks[2], stride=2)
@@ -271,10 +271,10 @@ class ResNetCIFAR(nn.Module):
     def _make_layer(self, in_channels, out_channels, num_blocks, stride):
         layers = []
 
-        # Primer bloque puede cambiar dimensiones
+        # First block can change dimensions
         layers.append(ResidualBlock(in_channels, out_channels, stride))
 
-        # Bloques subsecuentes mantienen dimensiones
+        # Subsequent blocks maintain dimensions
         for _ in range(1, num_blocks):
             layers.append(ResidualBlock(out_channels, out_channels, stride=1))
 
@@ -284,7 +284,7 @@ class ResNetCIFAR(nn.Module):
         # Capa inicial
         x = F.relu(self.bn1(self.conv1(x)))
 
-        # Bloques residuales
+        # Residual blocks
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)

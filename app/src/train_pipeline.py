@@ -17,19 +17,19 @@ import pandas as pd
 import torch.onnx
 
 # ==============================================================================
-# PIPELINE DE ENTRENAMIENTO
+# TRAINING PIPELINE
 # ==============================================================================
 
 class TrainingPipeline:
     """
-    Pipeline completo de entrenamiento, validación y evaluación
-    Incluye:
-    - Detección automática de device (CUDA/MPS/CPU)
-    - Entrenamiento con early stopping
-    - Sistema de checkpoints
-    - Evaluación y métricas
-    - Visualizaciones profesionales
-    - Guardado de configuraciones y resultados
+    Complete training, validation and evaluation pipeline
+    Includes:
+    - Automatic device detection (CUDA/MPS/CPU)
+    - Training with early stopping
+    - Checkpoint system
+    - Evaluation and metrics
+    - Professional visualizations
+    - Configuration and results saving
     """
 
     def __init__(self, model, config):
@@ -38,15 +38,15 @@ class TrainingPipeline:
             model: Modelo de PyTorch (nn.Module)
             config: Dict con configuración (lr, epochs, batch_size, patience, etc.)
         """
-        # Detección automática de device
+        # Automatic device detection
         self.device = self._detect_device()
         print(f"Device detectado: {self.device}")
 
-        # Modelo y configuración
+        # Model and configuration
         self.model = model.to(self.device)
         self.config = config
 
-        # Optimizador
+        # Optimizer
         optimizer_type = config.get('optimizer', 'SGD')
         opt_class = getattr(optim, optimizer_type)
         params = inspect.signature(opt_class.__init__).parameters
@@ -58,17 +58,17 @@ class TrainingPipeline:
 
         self.optimizer = opt_class(self.model.parameters(), **opt_kwargs)
 
-        # Mantenemos solo esta loss por las clases y el label smoothing para pruebas
+        # Keep only this loss for classes and label smoothing for testing
         self.loss_function = nn.CrossEntropyLoss(
             #https://docs.pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
             label_smoothing=config.get('label_smoothing', 0.0) # Por defecto es 0.0
         ).to(self.device)
 
-        # LR Scheduler (on plateau, pero se podria cambiar para aceptar otros tipos)
+        # LR Scheduler (on plateau, but could be changed to accept other types)
         es_patience = self.config.get('es_patience', 10)
         lr_patience = self.config.get('lr_patience', 3)
 
-        if lr_patience > es_patience: # Advertir si el patiencie esta mal configurado
+        if lr_patience > es_patience: # Warn if patience is misconfigured
             print(f"Warning: lr_patience ({lr_patience}) > early_stopping_patience ({es_patience})")
 
         self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
@@ -80,11 +80,11 @@ class TrainingPipeline:
             min_lr=1e-5,
             ) if self.config['lr_scheduler'] else None
 
-        # Configuración de visualización de plots
+        # Plot visualization configuration
         self.show_plots = self.config.get('show_plots', True)
         self.plot_display_time = self.config.get('plot_display_time')
 
-        # Estado del entrenamiento
+        # Training state
         self.train_losses = []
         self.val_losses = []
         self.val_metrics = []
@@ -92,7 +92,7 @@ class TrainingPipeline:
         self.best_epoch = 0
         self.current_epoch = 0
 
-        # Directorio del experimento
+        # Experiment directory
         self.experiment_id = str(uuid.uuid4())
         self.experiment_name = config.get("experiment_name", "experimento_sin_nombre")
         self.experiment_dir = os.path.join(
@@ -101,22 +101,22 @@ class TrainingPipeline:
         )
         os.makedirs(self.experiment_dir, exist_ok=True)
 
-        # Directorio de resultados
+        # Results directory
         self.results_dir = os.path.join(self.experiment_dir, 'results')
         os.makedirs(self.results_dir, exist_ok=True)
 
-        # Directorio de checkpoints
+        # Checkpoints directory
         self.checkpoint_dir = os.path.join(self.experiment_dir, 'checkpoints')
         os.makedirs(self.checkpoint_dir, exist_ok=True)
 
-        # Archivo de log de experimentos (JSON Lines), general
+        # Experiment log file (JSON Lines), general
         self.experiments_log_path = os.path.join(
             config.get('base_dir', '.'),
             config.get("experiments_log_file", "experiments_log.jsonl")
         )
 
     def _detect_device(self):
-        """Detecta el mejor dispositivo disponible"""
+        """Detect the best available device"""
         if torch.cuda.is_available():
             return torch.device('cuda')  # NVIDIA GPU
         elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
@@ -125,7 +125,7 @@ class TrainingPipeline:
             return torch.device('cpu')   # CPU fallback
 
     def _train_epoch(self, train_loader):
-        """Entrena una época completa"""
+        """Train one complete epoch"""
         self.model.train()
         running_loss = 0.0
 
@@ -144,7 +144,7 @@ class TrainingPipeline:
         return epoch_loss
 
     def _validate_epoch(self, val_loader):
-        """Valida una época completa"""
+        """Validate one complete epoch"""
         self.model.eval()
         running_loss = 0.0
         correct = 0
@@ -166,11 +166,11 @@ class TrainingPipeline:
 
     def train(self, train_loader, val_loader):
         """
-        Entrenamiento completo con early stopping y checkpoints
+        Complete training with early stopping and checkpoints
 
         Args:
-            train_loader: DataLoader de entrenamiento
-            val_loader: DataLoader de validación
+            train_loader: Training DataLoader
+            val_loader: Validation DataLoader
         """
         print("\n" + "="*70)
         print("ENTRENAMIENTO DEL MODELO")
@@ -188,11 +188,11 @@ class TrainingPipeline:
             for epoch in range(1, self.config['epochs'] + 1):
                 self.current_epoch = epoch
 
-                # Entrenar
+                # Train
                 train_loss = self._train_epoch(train_loader)
                 self.train_losses.append(train_loss)
 
-                # Validar
+                # Validate
                 val_loss, val_acc = self._validate_epoch(val_loader)
                 self.val_losses.append(val_loss)
                 self.val_metrics.append(val_acc)
@@ -212,7 +212,7 @@ class TrainingPipeline:
                       f"Val Acc: {val_acc:.2%}",
                       end="")
 
-                # Guardar mejor modelo (solo si mejora al menos 0.1 en accuracy)
+                # Save best model (only if improves at least 0.001 in accuracy)
                 if (val_acc - self.best_val_acc) >= 0.001:
                     self.best_val_acc = val_acc
                     self.best_epoch = epoch
@@ -224,7 +224,7 @@ class TrainingPipeline:
 
                 print()
 
-                # Checkpoint periódico
+                # Periodic checkpoint
                 if epoch % 5 == 0:
                     self.save_checkpoint('last_checkpoint.pth')
                     print(f"  → Checkpoint guardado")
@@ -244,7 +244,7 @@ class TrainingPipeline:
             print(f"Estado guardado en: {self.checkpoint_dir}interrupted_checkpoint.pth")
             print("="*70)
 
-        # Resumen final
+        # Final summary
         print("\n" + "="*70)
         print("RESUMEN DEL ENTRENAMIENTO")
         print("="*70)
@@ -253,12 +253,12 @@ class TrainingPipeline:
         print(f"Accuracy final: {self.val_metrics[-1]:.2%}")
         print("="*70)
 
-        # Cargar mejor modelo
+        # Load best model
         self.load_checkpoint('best_model.pth')
         print(f"\n✓ Mejor modelo cargado automáticamente")
 
     def save_checkpoint(self, filename, is_best=False):
-        """Guarda checkpoint del estado actual"""
+        """Save checkpoint of current state"""
         filepath = os.path.join(self.checkpoint_dir, filename)
         checkpoint = {
             'epoch': self.current_epoch,
@@ -276,7 +276,7 @@ class TrainingPipeline:
         self._convert_onnx()
 
     def load_checkpoint(self, filename):
-        """Carga checkpoint desde archivo"""
+        """Load checkpoint from file"""
         filepath = os.path.join(self.checkpoint_dir, filename)
         if not os.path.exists(filepath):
             print(f"! Checkpoint no encontrado: {filepath}")
@@ -299,20 +299,20 @@ class TrainingPipeline:
         return True
 
     def resume_training(self, checkpoint_file, train_loader, val_loader):
-        """Reanuda entrenamiento desde checkpoint"""
+        """Resume training from checkpoint"""
         if not self.load_checkpoint(checkpoint_file):
             print("No se puede reanudar el entrenamiento")
             return
 
         print(f"\nReanudando desde época {self.current_epoch + 1}...")
 
-        # Ajustar configuración para continuar
+        # Adjust configuration to continue
         remaining_epochs = self.config['epochs'] - self.current_epoch
         if remaining_epochs <= 0:
             print("El entrenamiento ya se completó")
             return
 
-        # Continuar entrenamiento
+        # Continue training
         original_epochs = self.config['epochs']
         self.train(train_loader, val_loader)
 

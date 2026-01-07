@@ -1,4 +1,4 @@
-# Configuración de carpetas para uso local
+# Folder configuration for local use
 import os
 import urllib.request
 from os import makedirs, path
@@ -12,7 +12,7 @@ from .pre_processed import TransformConfig, build_transforms, compute_dataset_st
 
 
 class Cifar101Dataset(Dataset):
-    """Dataset wrapper para CIFAR-10.1 almacenado en archivos .npy."""
+    """Dataset wrapper for CIFAR-10.1 stored in .npy files."""
 
     def __init__(self, images: np.ndarray, labels: np.ndarray, transform=None):
         self.images = images
@@ -32,7 +32,7 @@ class Cifar101Dataset(Dataset):
         return image, label
 
 
-# Descargar archivos si no existen
+# Download files if they don't exist
 def download_file(url, filename):
     if not path.exists(filename):
         print(f"Descargando {filename}...")
@@ -44,26 +44,26 @@ def download_file(url, filename):
 
 def load_data(datasets_folder: str | None = None) -> str:
     """
-    Descarga los datos de CIFAR10.1 si no existen
+    Download CIFAR-10.1 data if it doesn't exist
     """
 
-    # Carpeta local donde van a guardar los datos
+    # Local folder where data will be saved
     if datasets_folder is None:
         datasets_folder = "../datasets"
     makedirs(datasets_folder, exist_ok=True)
 
-    # Rutas de los archivos
+    # File paths
     data_file = path.join(datasets_folder, "cifar10.1_v4_data.npy")
     labels_file = path.join(datasets_folder, "cifar10.1_v4_labels.npy")
 
-    # URLs de descarga
+    # Download URLs
     data_url = "https://github.com/modestyachts/CIFAR-10.1/raw/master/datasets/cifar10.1_v4_data.npy"
     labels_url = "https://github.com/modestyachts/CIFAR-10.1/raw/master/datasets/cifar10.1_v4_labels.npy"
 
     download_file(data_url, data_file)
     download_file(labels_url, labels_file)
 
-    # Listar archivos en la carpeta
+    # List files in folder
     print(f"\nArchivos en {datasets_folder}:")
     for item in os.listdir(datasets_folder):
         item_path = path.join(datasets_folder, item)
@@ -79,7 +79,7 @@ def load_data(datasets_folder: str | None = None) -> str:
 def load_cifar10(
     datasets_folder: str, config: TransformConfig | None = None
 ) -> tuple[datasets.CIFAR10, datasets.CIFAR10, dict]:
-    """Carga CIFAR-10, transformaciones y estadísticas asociadas."""
+    """Load CIFAR-10, transformations and associated statistics."""
 
     config = config or TransformConfig()
 
@@ -106,9 +106,9 @@ def load_cifar101(
     shuffle: bool = False,
     config: TransformConfig | None = None,
 ):
-    """Carga CIFAR-10.1 y construye un `DataLoader` listo para usar.
+    """Load CIFAR-10.1 and build a ready-to-use DataLoader.
 
-    Retorna un diccionario con los objetos más utilizados (`dataloader`, `dataset`,
+    Returns a dictionary with the most used objects (`dataloader`, `dataset`,
     `images`, `labels`, `transform`, `mean`, `std`).
     """
 

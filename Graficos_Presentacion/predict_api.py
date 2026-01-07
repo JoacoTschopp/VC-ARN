@@ -66,7 +66,7 @@ class PredictionResponse(BaseModel):
     probabilities: List[float]
 
 class ResidualBlock(nn.Module):
-    """Bloque residual básico con skip connection"""
+    """Basic residual block with skip connection"""
 
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResidualBlock, self).__init__()
@@ -79,7 +79,7 @@ class ResidualBlock(nn.Module):
                                stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
-        # Skip connection con ajuste de dimensión
+        # Skip connection with dimension adjustment
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.Sequential(
@@ -103,16 +103,16 @@ class ResidualBlock(nn.Module):
 
 class ResNetCIFAR(nn.Module):
     """
-    ResNet adaptado para CIFAR-10 con skip connections
+    ResNet adapted for CIFAR-10 with skip connections
 
-    Arquitectura:
-    - Capa inicial convolucional
-    - 3 grupos de bloques residuales
+    Architecture:
+    - Initial convolutional layer
+    - 3 groups of residual blocks
     - Global Average Pooling
-    - Fully connected final
+    - Final fully connected layer
 
-    Parámetros:
-    - num_blocks: Lista con el número de bloques residuales por grupo (por defecto [2, 2, 2])
+    Parameters:
+    - num_blocks: List with number of residual blocks per group (default [2, 2, 2])
     """
 
     def __init__(self, num_blocks=[2, 2, 2]):
@@ -123,7 +123,7 @@ class ResNetCIFAR(nn.Module):
                                padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
 
-        # Grupos de bloques residuales
+        # Groups of residual blocks
         self.layer1 = self._make_layer(64, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(64, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(128, 256, num_blocks[2], stride=2)
@@ -132,16 +132,16 @@ class ResNetCIFAR(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(256, 10)
 
-        # Activación final
+        # Final activation
         self.final_activation = nn.Softmax(dim=1)
 
     def _make_layer(self, in_channels, out_channels, num_blocks, stride):
         layers = []
 
-        # Primer bloque puede cambiar dimensiones
+        # First block can change dimensions
         layers.append(ResidualBlock(in_channels, out_channels, stride))
 
-        # Bloques subsecuentes mantienen dimensiones
+        # Subsequent blocks maintain dimensions
         for _ in range(1, num_blocks):
             layers.append(ResidualBlock(out_channels, out_channels, stride=1))
 
@@ -151,7 +151,7 @@ class ResNetCIFAR(nn.Module):
         # Capa inicial
         x = F.relu(self.bn1(self.conv1(x)))
 
-        # Bloques residuales
+        # Residual blocks
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)

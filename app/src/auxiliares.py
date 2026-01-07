@@ -13,10 +13,10 @@ except ImportError:
 
 
 # ==============================================================================
-# FUNCIÓN AUXILIAR: Comparar arquitecturas
+# HELPER FUNCTION: Compare architectures
 # ==============================================================================
 def compare_models():
-    """Compara las 4 arquitecturas disponibles"""
+    """Compare the 4 available architectures"""
     models = {
         "BaseModel": BaseModel(),
         "SimpleCNN": SimpleCNN(),
@@ -37,8 +37,8 @@ def compare_models():
         print(f"  Parámetros totales: {total_params:,}")
         print(f"  Parámetros entrenables: {trainable_params:,}")
 
-        # Calcular tamaño en MB
-        param_size = total_params * 4 / (1024**2)  # 4 bytes por parámetro (float32)
+        # Calculate size in MB
+        param_size = total_params * 4 / (1024**2)  # 4 bytes per parameter (float32)
         print(f"  Tamaño estimado: {param_size:.2f} MB")
 
     print("\n" + "=" * 70)
@@ -50,7 +50,7 @@ def compare_models():
 
 
 def draw_model(model: nn.Module, output_dir=None):
-    """Dibuja la arquitectura de un modelo"""
+    """Draw model architecture"""
     if not TORCHVIEW_AVAILABLE:
         print("! torchview no está instalado. Instalar con: pip install torchview")
         return None
@@ -65,7 +65,7 @@ def draw_model(model: nn.Module, output_dir=None):
 
 
 def que_fierro_tengo():
-    """Detecta y muestra el dispositivo disponible (GPU/CPU)"""
+    """Detect and display available device (GPU/CPU)"""
     if torch.cuda.is_available():
         device = torch.device("cuda")
         print(f"✓ GPU NVIDIA disponible: {torch.cuda.get_device_name(0)}")
@@ -76,7 +76,7 @@ def que_fierro_tengo():
         device = torch.device("cpu")
         print("✓ Usando CPU")
 
-    # Crear un tensor de prueba
+    # Create test tensor
     test_tensor = torch.randn(10, 10).to(device)
     print(f"✓ Tensor de prueba creado en: {test_tensor.device}")
     return device
